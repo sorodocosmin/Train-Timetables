@@ -26,7 +26,8 @@ bool SQL::connect_to_databse(){
         this->getServer_IP().c_str(),
         this->getUsername().c_str(),
         this->getPassword().c_str(),
-        NULL, 0, NULL, 0) == NULL) //if the connection couldn't have been made
+        this->getDatabaseName().c_str(),
+        0, NULL, 0) == NULL) //if the connection couldn't have been made
         {
           fprintf(stderr, "%s\n", mysql_error(connection));//why the connection couldn't have been made
           mysql_close(connection);//we close the connection
