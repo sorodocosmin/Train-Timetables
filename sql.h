@@ -12,6 +12,7 @@ class SQL {
   const std::string getPassword();
 
   bool connect_to_databse();
-  void add_a_train();
-
+  MYSQL_RES* execute_query (std::string cmd_query);
+  std::string get_result_of_the_executed_query();
+  std::string get_result_of_the_executed_query_2();
 };
