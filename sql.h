@@ -12,5 +12,6 @@ class SQL {
   const std::string getPassword();
 
   bool connect_to_databse();
+  void add_a_train();
 
 };
