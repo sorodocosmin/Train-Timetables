@@ -14,7 +14,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 /* codul de eroare returnat de anumite apeluri */
-extern int errno;
 
 /* portul de conectare la server*/
 int port;
@@ -24,6 +23,7 @@ int main (int argc, char *argv[])
   int sd;			// descriptorul de socket
   struct sockaddr_in server;	// structura folosita pentru conectare
   		// mesajul trimis
+  char menu[] = "Hello ! Please introduce the number coresponding with the command which you want to execute : \n- 0. Exit \n- 1. Login \n- 2. \n";
   int nr1=0;
   char buf[1024];
 
@@ -67,10 +67,10 @@ if(inet_pton(AF_INET, argv[1], &server.sin_addr)<=0){
   int quit =0 ;
   while(!quit){
   /* trimiterea mesajului la server */
-  printf ("[client]Introduceti comanda: \n");
+  printf ("%s",menu);
   int nr_read = read (0, buf, sizeof(buf));
-  printf("[client] Am citit %s\n",buf);
   buf[nr_read] = '\0';
+  printf("[client] Am citit %s\n",buf);
 
   if (write (sd,buf,sizeof(buf)) <= 0)
     {
@@ -89,7 +89,7 @@ if(inet_pton(AF_INET, argv[1], &server.sin_addr)<=0){
     buffer[nr_read]='\0';
   /* afisam mesajul primit */
   printf ("[client]Mesajul primit este: %s\n", buffer);
-  if(strcmp(buffer,"quit\n")==0)
+  if(strcmp(buf,"0\n")==0)
     quit =1 ;
 }//while
   /* inchidem conexiunea, am terminat */

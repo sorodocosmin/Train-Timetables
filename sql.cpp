@@ -2,9 +2,9 @@
 #include<cstring>
 
 
-SQL::SQL(): server_IP("127.0.0.1"), username ("root"), password("password"), database_name("trains_database"){//the constructor
+SQL::SQL(): server_IP("localhost"), username ("root"), password("password"), database_name("trains_database"){//the constructor
+//printf("Ctr - DB \n");
 }
-
 
 const std::string SQL::getServer_IP(){
   return this->server_IP;
@@ -22,6 +22,9 @@ const std::string SQL::getPassword(){
   return this->password;
 }
 
+MYSQL * SQL::getConnection(){
+  return this->connection;
+}
 
 
 bool SQL::connect_to_databse(){
@@ -47,7 +50,7 @@ MYSQL_RES* SQL::execute_query (std::string cmd_query){
   if (error_code!=0){
     if(mysql_errno(this->connection)!=2014){ //if the error it's not produced by the fact that 2 clients try to execute a query at the same time
       printf("the error code is  : %d \n", mysql_errno(this->connection));
-      printf("MySQL query error : %s\n",mysql_error(connection) );
+      printf("MySQL query error : %s\n",mysql_error(this->connection) );
       exit(-1);
     }
   }
@@ -66,32 +69,6 @@ This can happen, for example, if you are using mysql_use_result() and try to exe
 
 
 std::string SQL::get_result_of_the_executed_query(){
-  MYSQL_RES *result;	// the results
-  MYSQL_ROW row;	// the results row (line by line)
-  MYSQL_FIELD *field; //contains information about the table's header
-  int number_fields; //numbr of columns which are 'printed' by the query
-  std::string res="";
-  result = this->execute_query("SELECT * FROM arrivals_departures;");
-  number_fields = mysql_num_fields(result);
-  while ((row=mysql_fetch_row(result)) != NULL){ //row gets one by one line from the result;
-      for( int i=0 ; i<number_fields; ++i ) {//
-          if(i==0){
-            while((field = mysql_fetch_field(result))!= NULL){//this resets once a query is again executed
-                res= res + (field->name) + "\t";
-             }
-
-             res = res + "\n";
-          }
-        res = res + (row[i]? row[i] : "NULL" ) + "\t";
-      }//for
-  }//while
-
-  mysql_free_result(result);//clean up the result of the query
-
-  return res;
-}
-
-std::string SQL::get_result_of_the_executed_query_2(){
   MYSQL_RES *result;	// the results
   MYSQL_ROW row;	// the results row (line by line)
   MYSQL_FIELD *field; //contains information about the table's header
