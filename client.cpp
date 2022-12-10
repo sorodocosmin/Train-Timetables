@@ -1,97 +1,114 @@
-/* cliTCPIt.c - Exemplu de client TCP
-   Trimite un numar la server; primeste de la server numarul incrementat.
-
-   Autor: Lenuta Alboaie  <adria@infoiasi.ro> (c)2009
-*/
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
 #include <string.h>
 #include <arpa/inet.h>
-/* codul de eroare returnat de anumite apeluri */
-
-/* portul de conectare la server*/
-int port;
+#include "menu.h"
 
 int main (int argc, char *argv[])
-{
-  int sd;			// descriptorul de socket
-  struct sockaddr_in server;	// structura folosita pentru conectare
-  		// mesajul trimis
-  char menu[] = "Hello ! Please introduce the number coresponding with the command which you want to execute : \n- 0. Exit \n- 1. Login \n- 2. \n";
+{ 
+  int port;
+  int sd;			// socket's descriptor
+  struct sockaddr_in server;	// struct used for connecting
   int nr1=0;
-  char buf[1024];
+  char buffer[1024];
+  char ip_adress[100];
+  /*if there aren't 3 arguments when running the client*/
+  if (argc != 3){
+    printf ("The default value for the IP is : 127.0.0.1\n and for the Port : 4444 \n");
+    printf ("If you want to specify other IP/Port please use this syntax :\n%s <IP_adress> <Port>\n", argv[0]);
+    strcpy(ip_adress,"127.0.0.1");
+    port = 4444;
+  }
+  else{
+    strcpy(ip_adress,argv[1]);
+    /* the specified port */
+    port = atoi (argv[2]);
+  }
 
-  /* exista toate argumentele in linia de comanda? */
-  if (argc != 3)
-    {
-      printf ("Sintaxa: %s <adresa_server> <port>\n", argv[0]);
-      return -1;
-    }
-
-  /* stabilim portul */
-  port = atoi (argv[2]);
-
-  /* cream socketul */
+  /* create the socket*/
   if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
     {
-      perror ("Eroare la socket().\n");
+      perror ("Socket Error.\n");
       return errno;
     }
 
-  /* umplem structura folosita pentru realizarea conexiunii cu serverul */
-  /* familia socket-ului */
+  /* IPV4 */
   server.sin_family = AF_INET;
-  /* adresa IP a serverului */
-//  server.sin_addr.s_addr = inet_pton(argv[1]);
-if(inet_pton(AF_INET, argv[1], &server.sin_addr)<=0){
-        perror("[-]Invalid IP address!\n");
-        exit(-1);
-    }
-  /* portul de conectare */
+
+  /* the server's IP adress */
+  if(inet_pton(AF_INET, ip_adress, &server.sin_addr)<=0){
+    perror("[-]Invalid IP address!\n");
+    exit(-1);
+  }
+
+  /* the port which will make the connection */
   server.sin_port = htons (port);
 
-  /* ne conectam la server */
-  if (connect (sd, (struct sockaddr *) &server,sizeof (struct sockaddr)) == -1)
-    {
-      perror ("[client]Eroare la connect().\n");
-      return errno;
+  /* connect to the Server */
+  if (connect (sd, (struct sockaddr *) &server,sizeof (struct sockaddr)) == -1){
+    perror ("[-]Connect() Error.\n");
+    return errno;
+  }
+
+  menu Client;
+
+  printf("%s", (Client.get_welcome_message()).c_str());
+
+  while( Client.get_quit_status() == false ){
+
+    if (Client.get_logged_status() == false){
+      printf ("%s",(Client.get_regular_menu_message()).c_str());
+    }
+    else{
+      printf ("%s",(Client.get_administrator_menu_message()).c_str());
     }
 
-  /* citirea mesajului */
-  int quit =0 ;
-  while(!quit){
-  /* trimiterea mesajului la server */
-  printf ("%s",menu);
-  int nr_read = read (0, buf, sizeof(buf));
-  buf[nr_read] = '\0';
-  printf("[client] Am citit %s\n",buf);
+    int nr_read = read (0, buffer, sizeof(buffer));
 
-  if (write (sd,buf,sizeof(buf)) <= 0)
-    {
-      perror ("[client]Eroare la write() spre server.\n");
-      return errno;
+    if( -1 == nr_read ){
+      perror("Couldn t read the option which you have chosen\n");
+      printf("\nPlease try again\n");
     }
-    char buffer[1024];
-  /* citirea raspunsului dat de server
-     (apel blocant pina cind serverul raspunde) */
+    else{//there was no error reading the option
+      buffer[nr_read] = '\0';
+      printf("[client] Am citit %s\n",buffer);
 
-  if ((nr_read=read (sd, buffer,sizeof(buffer))) < 0)
-    {
-      perror ("[client]Eroare la read() de la server.\n");
-      return errno;
+      Client.handle_client_option(buffer);
+
+      strcpy(buffer,(Client.get_the_message_which_will_be_send_to_the_server()).c_str());
+
+      if (write (sd,buffer,sizeof(buffer)) <= 0){
+        perror ("[-]Write() Error. The message couldn't be send to the server.\n");
+        return errno;
+      }
+    
+      char buffer_received[1024];
+
+      if (Client.get_quit_status() == false ){//the server won t send any response back to the client for the Quit command
+      
+        Client.clear_message_send();//we clear the message from Client instance
+        /* read the response from the server
+        (it's in a blocking state, until the server sends the response) */
+        if ((nr_read=read (sd, buffer_received,sizeof(buffer))) < 0){
+          perror ("[-]Read() Error, couldn't read the response from the server.\n");
+          return errno;
+        }
+
+        buffer_received[nr_read]='\0';
+        //printf ("[+]The response is: %s\n", buffer_received);
+        Client.set_received_message(buffer_received);
+        Client.set_logged_status();
+        Client.print_received_message();
+
+      }
     }
-    buffer[nr_read]='\0';
-  /* afisam mesajul primit */
-  printf ("[client]Mesajul primit este: %s\n", buffer);
-  if(strcmp(buf,"0\n")==0)
-    quit =1 ;
-}//while
-  /* inchidem conexiunea, am terminat */
+  }//while
+
+  /* close the connection */
   close (sd);
 }

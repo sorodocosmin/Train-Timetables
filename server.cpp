@@ -8,13 +8,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "treat_client.h"
-
+#include "sql.h"
 #define PORT 4444
 
-SQL BD;
+
 
 int main ()
 {
+    SQL BD("localhost","root","password","trains_database");
 
   if(BD.connect_to_databse() == false){//connect the server to the databse
 
@@ -29,13 +30,11 @@ int main ()
 struct sockaddr_in server;	// structura folosita de server
 struct sockaddr_in from;
 int sd;		//descriptorul de socket
-int pid;
-int i=0;
 
 /* crearea unui socket */
 if ((sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)//  TCP
 {
-    perror ("[server]Eroare la socket().\n");
+    perror ("[-]Socket error\n");
     return errno;
 }
 /* utilizarea optiunii SO_REUSEADDR */
@@ -49,10 +48,10 @@ bzero (&from, sizeof (from));
 /* umplem structura folosita de server */
 /* stabilirea familiei de socket-uri */
 server.sin_family = AF_INET;
-/* acceptam orice adresa */
-server.sin_addr.s_addr = htonl (INADDR_ANY);
-/* utilizam un port utilizator */
-server.sin_port = htons (PORT);
+
+server.sin_addr.s_addr = htonl (INADDR_ANY); //we accept the connection from any adress
+
+server.sin_port = htons (PORT); //the port which the client will have to specify
 
 /* atasam socketul */
 if (bind (sd, (struct sockaddr *) &server, sizeof (struct sockaddr)) == -1)
@@ -75,19 +74,12 @@ while (1)
 
     printf ("[server]Asteptam la portul %d...\n",PORT);
 
-
-    // client= malloc(sizeof(int));
-    /* acceptam un client (stare blocanta pina la realizarea conexiunii) */
-    if ( (client = accept (sd, (struct sockaddr *) &from, (socklen_t*)&length)) < 0)
-    {
-        perror ("[server]Eroare la accept().\n");
-        continue;
+    /* Accept a client (blocking state untill a client connects*/
+    if ( (client = accept (sd, (struct sockaddr *) &from, (socklen_t*)&length)) < 0){
+        perror ("[-]Accept() Error\n");
+        continue;//the client will have to try to connect again
     }
-
-    /* s-a realizat conexiunea, se astepta mesajul */
-
-    // int idThread; //id-ul threadului
-    // int cl; //descriptorul intors de accept
+    
     treat_client CLIENT(client, BD.getConnection());
     CLIENT.create_thread();
 

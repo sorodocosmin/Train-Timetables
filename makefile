@@ -1,9 +1,9 @@
 all:
 
-	g++ -o SQLprogram treat_client.cpp sql.cpp server.cpp -lmysqlclient
+	g++ -o Server sql_functions.cpp treat_client.cpp sql.cpp server.cpp -lmysqlclient
 
-	g++ -o client client.cpp
+	g++ -o Client menu.cpp client.cpp
 clean:
 
-	rm SQLprogram
-	rm client
+	rm Server
+	rm Client
