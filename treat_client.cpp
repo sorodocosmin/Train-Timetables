@@ -18,27 +18,37 @@ std::string treat_client::response(){
     //the message will be recieved in this format  :
     // <status_logged><number_option><aditional_info1_for_option>...etc 
 
-    std::string case_exit = this->start_delimiter + "0" + this->stop_delimiter;
-    std::string case_login =  this->start_delimiter + "1" + this->stop_delimiter;
-    std::string case_trains_from_X_to_Y =  this->start_delimiter + "2" + this->stop_delimiter;
-    std::string case_departure_in_next_hour = this->start_delimiter + "3" + this->stop_delimiter;
-    std::string case_arrival_in_next_hour = this->start_delimiter + "4" + this->stop_delimiter;
 
     std::string status_logged = this->string_between_2_delimiters_and_erase();
     printf("Status logged is : %s \n", status_logged.c_str());
     std::string option_chosen = this->string_between_2_delimiters_and_erase();
     if (status_logged == (start_delimiter + "0" + stop_delimiter) ){//the user isn't an Administrator
+        std::string case_exit = this->start_delimiter + "0" + this->stop_delimiter;
+        std::string case_login =  this->start_delimiter + "1" + this->stop_delimiter;
+        std::string case_trains_from_X_to_Y =  this->start_delimiter + "2" + this->stop_delimiter;
+        std::string case_departure_in_next_hour = this->start_delimiter + "3" + this->stop_delimiter;
+        std::string case_arrival_in_next_hour = this->start_delimiter + "4" + this->stop_delimiter;
+
         if(option_chosen == case_exit){//Exit
             return this->option_quit();
         }
-        else if(option_chosen == case_trains_from_X_to_Y){
+        else if(option_chosen == case_trains_from_X_to_Y){//option 2
             return status_logged + this->option_trains_from_station_X_to_station_Y();
         }
-        else if (option_chosen == case_departure_in_next_hour ){
+        else if (option_chosen == case_departure_in_next_hour ){// option 3
             return status_logged + this->option_trains_which_leave_in_the_next_hour();
         }
-        else if(option_chosen == case_arrival_in_next_hour){
+        else if(option_chosen == case_arrival_in_next_hour){// option 4
             return status_logged + this->option_trains_which_arrive_in_the_next_hour();
+        }
+        else if(option_chosen == case_login){
+            std::string resp_option_login = this->option_login(); 
+            if( resp_option_login== "Logged in successfully!"){
+                return this->start_delimiter + "1" + this->stop_delimiter + "Logged in successfully!";
+            }
+            else{
+                return status_logged + resp_option_login;
+            }
         }
         else{
             return status_logged + "Unknown command";
@@ -46,7 +56,30 @@ std::string treat_client::response(){
         
     }
     else{//the user is an administrator
+        std::string case_exit = this->start_delimiter + "0" + this->stop_delimiter;
+        std::string case_logout =  this->start_delimiter + "1" + this->stop_delimiter;
+        std::string case_trains_from_X_to_Y =  this->start_delimiter + "7" + this->stop_delimiter;
+        std::string case_departure_in_next_hour = this->start_delimiter + "8" + this->stop_delimiter;
+        std::string case_arrival_in_next_hour = this->start_delimiter + "9" + this->stop_delimiter;
+
+        if(option_chosen == case_exit){
+            return status_logged + this->option_quit();
+        }
+        else if ( option_chosen == case_trains_from_X_to_Y){
+            return status_logged + this->option_trains_from_station_X_to_station_Y();
+        }
+        else if ( option_chosen == case_departure_in_next_hour){
+            return status_logged + this->option_trains_which_leave_in_the_next_hour();
+        }
+        else if ( option_chosen == case_arrival_in_next_hour){
+            return status_logged + this->option_trains_which_arrive_in_the_next_hour();
+        }
+        else if (option_chosen == case_logout){
+            return this->start_delimiter + "0" + this->stop_delimiter;
+        }
+        else{
         return status_logged + "idk yet";
+        }
     }
 }
 
@@ -112,9 +145,6 @@ std::string treat_client::string_between_2_delimiters_and_erase (){
     return str;
 }
 
-std::string treat_client::option_quit(){
-    return "The client exited";
-}
 
 bool treat_client::verify_existance_of_station(std::string name_of_station){
     char query_verify_existance_of_stations[200];
@@ -128,6 +158,42 @@ bool treat_client::verify_existance_of_station(std::string name_of_station){
         return true;
     }
 }
+
+
+std::string treat_client::option_quit(){
+    return "The client exited";
+}
+
+
+ std::string treat_client::option_login(){
+
+    std::string username = this->string_between_2_delimiters_and_erase();
+    username.erase(0,this->start_delimiter.length());
+    username.erase(username.length()-this->stop_delimiter.length(),username.length());
+
+    std::string password = this->string_between_2_delimiters_and_erase();
+    password.erase(0,this->start_delimiter.length());
+    password.erase(password.length()-this->stop_delimiter.length(),password.length());
+
+    char query_verify_existance_of_user_and_psswd[200];
+    sprintf(query_verify_existance_of_user_and_psswd,"SELECT 'c' from users WHERE username='%s';",username.c_str());
+    std::string res;
+    res = this->DB_connection.get_result_of_the_query(query_verify_existance_of_user_and_psswd) ; 
+    if ( res == "" || res.substr(0,5) == "ERROR"){
+        return "Sorry we couldn't find any user with this username";
+    }
+    else{
+        sprintf(query_verify_existance_of_user_and_psswd,"SELECT 'c' from users WHERE username='%s' AND password='%s';",username.c_str(),password.c_str());
+        res = this->DB_connection.get_result_of_the_query(query_verify_existance_of_user_and_psswd) ;
+        if ( res == "" || res.substr(0,5) == "ERROR"){
+            return "Sorry, the password is incorrect!";
+        }
+        else{
+            return "Logged in successfully!";
+        }
+    }
+}
+
 
 std::string treat_client::option_trains_from_station_X_to_station_Y(){
     std::string departure_station = this->string_between_2_delimiters_and_erase();

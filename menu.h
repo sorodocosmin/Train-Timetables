@@ -13,14 +13,17 @@ class menu {
         bool logged_status;//this value will change to true if the users will login
         bool quit_status;//it will change to true, if the users chooses the Exit option
 
+        std::string read_the_extra_info_from_the_user(std::string error_message,std::string err_message_nr_of_chars_is_bigger, int max_nr_of_chars_which_can_be_read);
+        std::string read_the_delay();
         void login_option();
         void quit_option();
         void trains_from_station_X_to_station_Y_option();
         void trains_which_leave_in_the_next_hour_option();
         void trains_which_arrive_in_the_next_hour_option();
+
         //the below methods can't be called if the user isn't an Administrator
         //void add_train_option();
-        //void add_delay_option();
+        void add_delay_option();
         //void add_new_account();
         //void change_username();
         //void change_password();
