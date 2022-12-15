@@ -49,37 +49,44 @@ std::string sql_functions::get_result_of_the_query(std::string query){
         return error;
     }
     //if the query executed just fine;
-    result = this->execute_query();
-    number_fields = mysql_num_fields(result);
-    while ((row=mysql_fetch_row(result)) != NULL){ //row gets one by one line from the result;
+    std::string first_word_from_quey = query.substr(0,6);
+    if(first_word_from_quey!="UPDATE" && first_word_from_quey!="INSERT" && first_word_from_quey!="DELETE"){
+      result = this->execute_query();
+      number_fields = mysql_num_fields(result);
+      while ((row=mysql_fetch_row(result)) != NULL){ //row gets one by one line from the result;
         for( int i=0 ; i<number_fields; ++i ) {//
             if(i==0){
                 while((field = mysql_fetch_field(result))!= NULL){//this resets once a query is again executed
                     res=res + (field->name) + "|";
-                    //if(strlen(field->name) > max_chars_in_each_coloumn[i])
-                        //max_chars_in_each_coloumn[i] = strlen(field->name);
                 }
 
                 res = res + "\n";
             }
             res = res + (row[i]? row[i] : "NULL" ) + "|";
-            
-            //if(strlen(row[i]) > max_chars_in_each_coloumn[i])
-               // max_chars_in_each_coloumn[i] = strlen(row[i]);
         }//for
-    }//while
-    mysql_free_result(result);//clean up the result of the query
+      }//while
 
-    //this->stop_light = false;
-    
-    if(res == ""){
-      return res;
+      mysql_free_result(result);//clean up the result of the query
+
+      //this->stop_light = false;
+      if(res == ""){
+        return res;
+      }
+      else if (res.at(0) == 'c'){
+        return res;
+      }
+      else{
+        return format_response(res,number_fields);
+      }
     }
-    else if (res.at(0) == 'c'){
-      return res;
+    else if(first_word_from_quey=="UPDATE"){
+      return "The update of the delay was successfully made!";
+    }
+    else if (first_word_from_quey=="INSERT"){
+      return "The insert of the train was successfully made!";
     }
     else{
-      return format_response(res,number_fields);
+      return "The train deleted successfully!";
     }
    
 }
