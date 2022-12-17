@@ -17,13 +17,12 @@ int main ()
 {
     SQL BD("localhost","root","password","trains_database");
 
-  if(BD.connect_to_databse() == false){//connect the server to the databse
-
-      printf("The server couldn't connect to the databse!\n ! Try to restart the server ! \n");
-      return -1;
+    if(BD.connect_to_databse() == false){//connect the server to the databse
+        printf("The server couldn't connect to the databse!\n ! Try to restart the server ! \n");
+        return -1;
     }
-  else{
-      printf("[+] The server connected to the databse successfully \n");
+    else{
+        printf("[+] The server connected to the databse successfully \n");
     }
 
 //--------------------------SERVER--------------------------------------//

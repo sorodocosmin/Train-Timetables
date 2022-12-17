@@ -7,19 +7,19 @@ server_IP(IP), username (usrname), password(pswd), database_name(db_name){//the 
 
 }
 
-const std::string SQL::getServer_IP(){
+std::string SQL::getServer_IP(){
   return this->server_IP;
 }
 
-const std::string SQL::getUsername(){
+std::string SQL::getUsername(){
   return this->username;
 }
 
-const std::string SQL::getDatabaseName(){
+std::string SQL::getDatabaseName(){
   return this->database_name;
 }
 
-const std::string SQL::getPassword(){
+std::string SQL::getPassword(){
   return this->password;
 }
 

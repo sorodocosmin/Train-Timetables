@@ -30,6 +30,7 @@ class menu {
         void add_new_account_option();
         void change_username_option();
         void change_password_option();
+        void show_all_trains_option();
         void logout();
     public :
 

@@ -3,7 +3,7 @@
 menu::menu(){
     this->welcome_message = "\n---------------------------------------\n| Hello ! Welcome to the TRAINS APP ! |\n---------------------------------------\n\n";
     this->regular_menu_message = " Please introduce only the number coresponding with the command that you want to execute : \n- 0. Exit \n- 1. Login \n- 2. Show trains from stataion \"X\" to station \"Y\" in a date \"D\" \n- 3. Show the trains which will leave from station \"X\" in the next hour\n- 4. Show the trains wich will arrive to station \"X\" in the next hour\n";
-    this->administrator_menu_message = "Please introduce only the number coresponding with the command that you want to execute : \n- 0. Exit \n- 1. Logout \n- 2. Insert delay(or if it arrives sonner) on a train at arrival in station \"X\"\n- 3. Add new train or insert a new station for an existing one \n- 4. Delete train \n- 5. Create another Administrator account \n- 6. Modify username \n- 7. Modify password\n- 8. Show trains from station \"X\" to station \"Y\" in a date \"D\" \n- 9. Show the trains which will leave from station \"X\" in the next hour\n- 10. Show the trains wich will arrive to station \"X\" in the next hour\n";
+    this->administrator_menu_message = "Please introduce only the number coresponding with the command that you want to execute : \n- 0. Exit \n- 1. Logout \n- 2. Insert delay(or if it arrives sonner) on a train at arrival in station \"X\"\n- 3. Add new train or insert a new station for an existing one \n- 4. Delete train \n- 5. Create another Administrator account \n- 6. Modify username \n- 7. Modify password\n- 8. Show trains from station \"X\" to station \"Y\" in a date \"D\" \n- 9. Show the trains which will leave from station \"X\" in the next hour\n- 10. Show the trains wich will arrive to station \"X\" in the next hour\n- 11. Show all trains for today\n";
     this->bye_message = "\n--------------------------------\n| You closed the APP :( . Bye. |\n--------------------------------\n";
     this->send_to_server_message = "";
     
@@ -88,6 +88,9 @@ void menu::handle_client_option(std::string option){
         }
         else if ( option == "10\n"){
             this->trains_which_arrive_in_the_next_hour_option();   
+        }
+        else if (option=="11\n"){
+            this->show_all_trains_option();
         }
         else{
             this->send_to_server_message += this->start_delimiter + "Unknown command" + this->stop_delimiter;
@@ -442,7 +445,7 @@ void menu::add_train_option(){
     date = this->read_date_and_time_from_the_user();
     date += ":00";
 
-    this->send_to_server_message += this->text_between_delimiters(station);//+<arrival_time>
+    this->send_to_server_message += this->text_between_delimiters(date);//+<arrival_time>
 
     printf(" Introduce the date and hour (YYYY-MM-DD HH:MM) at departure from the mentioned station: ");
     fflush(stdout);
@@ -573,6 +576,11 @@ void menu::change_password_option(){
     this->send_to_server_message += this->text_between_delimiters(password);//+<new_passowrd>
 
 }
+
+void menu::show_all_trains_option(){
+    this->send_to_server_message += this->start_delimiter + "11" + this->stop_delimiter;
+}
+
 void menu::logout(){
     this->send_to_server_message += this->start_delimiter + "1" + this->stop_delimiter;
 }
@@ -590,8 +598,8 @@ void menu::set_logged_status(){
     }
 }
 void menu::print_received_message(){
-    //before we print the message, we delete the <logged_status><_message>
+    //before we print the message, we delete the <logged_status> part
     this->received_message.erase(0,1 + this->start_delimiter.length()+this->stop_delimiter.length());
 
-    printf("the received message is : \n%s\n", (this->received_message).c_str());
+    printf("\n\n%s\n\n", (this->received_message).c_str());
 }

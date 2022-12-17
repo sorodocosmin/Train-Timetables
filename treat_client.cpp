@@ -4,7 +4,6 @@ int treat_client::number_of_active_threads = 0;//initialize the number of active
 treat_client::treat_client (int descriptor, MYSQL *connection) : DB_connection(connection){
     this->desciptor_client = descriptor ;
     this->number_of_active_threads ++;
-    //printf("CONSTRUCTOR TREAT CLIENT \n");
 } 
 
 void treat_client::create_thread(){
@@ -20,8 +19,9 @@ std::string treat_client::response(){
 
 
     std::string status_logged = this->string_between_2_delimiters_and_erase();
-    printf("Status logged is : %s \n", status_logged.c_str());
+
     std::string option_chosen = this->string_between_2_delimiters_and_erase();
+
     if (status_logged == (start_delimiter + "0" + stop_delimiter) ){//the user isn't an Administrator
         std::string case_exit = this->start_delimiter + "0" + this->stop_delimiter;
         std::string case_login =  this->start_delimiter + "1" + this->stop_delimiter;
@@ -67,6 +67,7 @@ std::string treat_client::response(){
         std::string case_trains_from_X_to_Y =  this->start_delimiter + "8" + this->stop_delimiter;
         std::string case_departure_in_next_hour = this->start_delimiter + "9" + this->stop_delimiter;
         std::string case_arrival_in_next_hour = this->start_delimiter + "10" + this->stop_delimiter;
+        std::string case_all_trains = this->start_delimiter + "11" + this->stop_delimiter;
 
         if(option_chosen == case_exit){
             return status_logged + this->option_quit();
@@ -101,8 +102,11 @@ std::string treat_client::response(){
         else if (option_chosen == case_logout){
             return this->start_delimiter + "0" + this->stop_delimiter;
         }
+        else if (option_chosen == case_all_trains){
+            return status_logged + this->show_all_trains_option();
+        }
         else{
-        return status_logged + "idk yet";
+        return status_logged + "Unknown command";
         }
     }
 }
@@ -125,27 +129,27 @@ void * treat_client::worker_thread (void * arg){
         else{
 
             buffer[nr_read] = '\0';
-            printf ("[Thread] Mesajul a fost receptionat...%s\n", buffer);
     
-            ((treat_client *)arg)->message_received = buffer;
+            //printf("[Thread] Mesajul a fost receptionat...%s\n",(((treat_client *)arg)->message_received).c_str());
+            ((treat_client *)arg)->message_received = buffer;//the message from the Client
 
-            printf("Copy-ul a fost facut : %s\n",(((treat_client *)arg)->message_received).c_str());
-            char result[1024];
-            strcpy(result,(((treat_client *)arg)->response()).c_str());
+            printf("[Thread] The message was received...\n");
 
-            if(strcmp(result,"The client exited") == 0){//if the command send by the client is exit, then the server won t send to the client any message
+            std::string result = ((treat_client *)arg)->response();
+
+            if(result == "The client exited"){//if the command send by the client is exit, then the server won't send to the client any message
                 quit = 1;
             }
             else{
                 /* write the response to the client */
-                //printf("\n\n\nMEsajul care se trimite : %s\n\n\nAre lungime : %ld",result,strlen(result));
-                if (write (ds_cl, result, sizeof(result)) <= 0){
+                if (write (ds_cl, result.c_str(), result.length()) <= 0){
                     // where ds_cl = ((treat_client*)arg)->desciptor_client;
                     perror ("[Thread]Write() Error. The response couldn't send to the client\n");
                     quit=1;//if the client leaves before getting an answer,
                 }
-                else
+                else{
                     printf ("[Thread] The response () was successfully sent.\n");
+                }
             }
         }
 
@@ -319,6 +323,7 @@ std::string treat_client::option_trains_which_arrive_in_the_next_hour(){
 
 }
 
+
 std::string treat_client::add_delay_option(){
     //we'll get the message from the client as <id_train><station_name><date><final_station><delay>
 
@@ -373,6 +378,7 @@ std::string treat_client::add_delay_option(){
     //we already put the condions in the client (so that the given delay is actually a number)
 
     //int delay_nr = std::stoi(delay);
+
     //check if there is a train with the specific id, station_name, date and final_station;
     char check_insert[1024];
     sprintf(check_insert,
@@ -391,7 +397,6 @@ std::string treat_client::add_delay_option(){
         "UPDATE arrivals_departures SET delay = %s WHERE UPPER(TRIM(id_train))=UPPER(TRIM('%s')) AND UPPER(TRIM(station_name))=UPPER(TRIM('%s')) AND DATE(arrival)='%s' AND UPPER(TRIM(final_station))=UPPER(TRIM('%s'));",
         delay.c_str(),id_train.c_str(),station_name.c_str(),date.c_str(),final_station.c_str());
 
-        printf("the query is : \n%s\n",insert_delay);
         //execute the query
         res = this->DB_connection.get_result_of_the_query(insert_delay);
 
@@ -594,5 +599,20 @@ printf("PASSWORD\n");
         else {
             return "The password modified successfully;";
         }
+    }
+}
+std::string treat_client::show_all_trains_option(){
+    std::string res;
+    char query_show_all_trains[1024];
+    sprintf(query_show_all_trains,"SELECT id_train AS \"ID\", station_name as \"Station Name\", arrival, IF(delay IS NULL,0,IF(delay<0,0,delay)) as \"Delay\", IF(delay IS NULL,0,IF(delay<0,-delay,0)) AS \"Arrives sonner with:\",departure,final_station as \"Final Station\" from arrivals_departures WHERE date(arrival)=date(sysdate());");
+    res = this->DB_connection.get_result_of_the_query(query_show_all_trains);
+    if( res=="" ){
+        return "Sorry, there are no trains today";
+    }
+    else if(res.substr(0,5) == "ERROR"){
+        return "Sorry, it couldn't show all trains:(\n Please try again;";
+    }
+    else {
+        return res;
     }
 }

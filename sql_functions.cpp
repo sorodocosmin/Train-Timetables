@@ -28,26 +28,24 @@ This can happen, for example, if you are using mysql_use_result() and try to exe
 
 MYSQL_RES* sql_functions::execute_query (){
   //send the querry to the database
-
   return (mysql_use_result(this->connection));
 }
 
 
 std::string sql_functions::get_result_of_the_query(std::string query){
-    MYSQL_RES *result;	// the results
+    MYSQL_RES *result;
     MYSQL_ROW row;	// the results row (line by line)
     MYSQL_FIELD *field; //contains information about the table's header
     int number_fields; //numbr of columns which are 'printed' by the query
     std::string res="";
-   // while(sql_functions::stop_light == true )
-   // printf("\n\n\n\nI WAITED HEREEE \n\n\n\n\n\n\n");
-    //this->stop_light = true ;
+
     if( this->query_error(query.c_str()) == false ){//if is was some error at the execution of the query
         printf("the error code is  : %d \n", mysql_errno(this->connection));
         char error[1024];
         sprintf(error,"ERROR :%s\n",mysql_error(this->connection) );
         return error;
     }
+
     //if the query executed just fine;
     std::string first_word_from_quey = query.substr(0,6);
     if(first_word_from_quey!="UPDATE" && first_word_from_quey!="INSERT" && first_word_from_quey!="DELETE"){
@@ -68,7 +66,6 @@ std::string sql_functions::get_result_of_the_query(std::string query){
 
       mysql_free_result(result);//clean up the result of the query
 
-      //this->stop_light = false;
       if(res == ""){
         return res;
       }
@@ -92,10 +89,24 @@ std::string sql_functions::get_result_of_the_query(std::string query){
 }
 
  std::string sql_functions::format_response(std::string response, int nr_col){
+  /* EX:
+nume_col1|nume_col2|nume_col3|
+abcdsdf|fdsf|a64|
+bunaziuaa|numelemeu este|cossssmin
+
+-->
+
++----------+---------------+-----------+
+|nume_col1 |nume_col2      |nume_col3S |
++----------+---------------+-----------+
+|abcdsdf   |fdsf           |a64        |
+|bunaziuaa |numelemeu este |cossssmin  |
+*/
+
   std::string response_formatat = "";
 
   std::string aux_res = response ;
-  int max_chars_in_each_coloumn[]={1,1,1,1,1,1,1,1,1,1};
+  int max_chars_in_each_coloumn[]={1,1,1,1,1,1,1,1,1,1};//we know that our DB doesn t use more that 10 columns
   int k = 0 ;
   while(aux_res.find("|")!= std::string::npos){
     int poz = aux_res.find("|");

@@ -16,6 +16,7 @@ class treat_client {
     std::string string_between_2_delimiters_and_erase ();
     //Ex: if msg_rcvd = "<1><43>", then the function willreturn <1>,
     // and it will  delete <1> from msg_rcvd (so msg_rcvd="<43>")
+
     std::string delete_the_delimiters_from_a_string (std::string str_with_delimiters);
 
     bool verify_existance_of_station(std::string name_of_station);
@@ -33,12 +34,14 @@ class treat_client {
     std::string add_new_account_option();
     std::string change_username_option();
     std::string change_password_option();
+    std::string show_all_trains_option();
 
     static void * worker_thread(void * arg);
     // ^- we make this function static, as it will be given as a parameter
     // when we will create a new thread ( in function pthread_create() )
     
     public : 
+
     treat_client (int descriptor, MYSQL *connection); //constructor
 
     std::string response();

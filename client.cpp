@@ -76,7 +76,6 @@ int main (int argc, char *argv[])
     }
     else{//there was no error reading the option
       buffer[nr_read] = '\0';
-      printf("[client] Am citit %s\n",buffer);
 
       Client.handle_client_option(buffer);
 
@@ -88,20 +87,31 @@ int main (int argc, char *argv[])
       }
     
       char buffer_received[1024];
+      std::string response_from_server;
 
       if (Client.get_quit_status() == false ){//the server won t send any response back to the client for the Quit command
       
         Client.clear_message_send();//we clear the message from Client instance
         /* read the response from the server
         (it's in a blocking state, until the server sends the response) */
-        if ((nr_read=read (sd, buffer_received,sizeof(buffer))) < 0){
+        if ((nr_read=read (sd, buffer_received,sizeof(buffer_received))) < 0){
           perror ("[-]Read() Error, couldn't read the response from the server.\n");
           return errno;
         }
+        else{
+          buffer_received[nr_read]='\0';
+          response_from_server = buffer_received;
+          while(nr_read == 1024){//in case that the message is bigger than 1024 bytes
+            if ((nr_read=read (sd, buffer_received,sizeof(buffer_received))) < 0){
+              perror ("[-]Read() Error, couldn't read the response from the server.\n");
+              return errno;
+            }
+            buffer_received[nr_read]='\0';
+            response_from_server += buffer_received;
+          }
+        }
 
-        buffer_received[nr_read]='\0';
-        //printf ("[+]The response is: %s\n", buffer_received);
-        Client.set_received_message(buffer_received);
+        Client.set_received_message(response_from_server);
         Client.set_logged_status();
         Client.print_received_message();
 
