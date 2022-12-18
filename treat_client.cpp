@@ -15,7 +15,7 @@ void treat_client::create_thread(){
 
 std::string treat_client::response(){
     //the message will be recieved in this format  :
-    // <status_logged><number_option><aditional_info1_for_option>...etc 
+    // <status_logged><number_option><aditional_info1_for_option>...etc<...>
 
 
     std::string status_logged = this->string_between_2_delimiters_and_erase();
@@ -70,7 +70,7 @@ std::string treat_client::response(){
         std::string case_all_trains = this->start_delimiter + "11" + this->stop_delimiter;
 
         if(option_chosen == case_exit){
-            return status_logged + this->option_quit();
+            return this->option_quit();
         }
         else if( option_chosen == case_add_delay){
             return status_logged + this->add_delay_option();
@@ -255,7 +255,10 @@ std::string treat_client::option_trains_from_station_X_to_station_Y(){
     sprintf(query_verify_existance_of_date,"SELECT 'c' from arrivals_departures WHERE DATE(arrival)='%s';",date.c_str());
     std::string res;
     res = this->DB_connection.get_result_of_the_query(query_verify_existance_of_date);
-    if ( res == "" || res.substr(0,5) == "ERROR"){
+    if (res == ""){
+        return "We are sorry, but we couldn't find any train on date " + date +  " :("; 
+    }
+    else if (res.substr(0,5) == "ERROR"){
         //return "The date was written wrong or it doesn't exist!";
         return res;
     }
@@ -267,8 +270,8 @@ std::string treat_client::option_trains_from_station_X_to_station_Y(){
     "SELECT a1.id_train AS \"ID\", a1.station_name AS \"Depart. Station\", a1.departure as \"Departure time\", IF((a1.delay IS NULL) OR a1.delay<0,0,a1.delay) as \"Delay\", TIME(a1.departure + INTERVAL IF((a1.delay IS NULL) OR a1.delay<0,0,a1.delay) MINUTE) as \"Actual depart. time\", a2.station_name as \"Arriv. Station\", a2.arrival as \"Arrival time\", IF(a2.delay IS NULL,0,IF(a2.delay<0,0,a2.delay)) as \"Delay\", IF(a2.delay IS NULL,0,IF(a2.delay<0,-a2.delay,0)) AS \"Arrives sonner with:\", TIME(a2.arrival + INTERVAL a2.delay MINUTE) as \"Actual arriv time\" FROM arrivals_departures a1 JOIN arrivals_departures a2 ON a1.id_train=a2.id_train AND UPPER(TRIM(a1.station_name))=UPPER(TRIM('%s')) AND UPPER(TRIM(a2.station_name))=UPPER(TRIM('%s')) AND DATE(a1.departure) = '%s' AND UPPER(TRIM(a1.final_station))=UPPER(TRIM(a2.final_station)) AND a1.arrival < a2.arrival;",
     departure_station.c_str(), arrival_station.c_str(), date.c_str());
 
-    //sprintf(query_response, "SELECT * from arrivals_departures;");
     res = this->DB_connection.get_result_of_the_query(query_response);
+    
     if ( res != "")
     return res;
     else
@@ -310,7 +313,7 @@ std::string treat_client::option_trains_which_arrive_in_the_next_hour(){
 
     char query_response[1024];
     sprintf(query_response,
-    "SELECT id_train, station_name as \"Station Name\", arrival as \"arrival time\", IF(delay IS NULL,0,IF(delay<0,0,delay)) as \"Delay\", IF(delay IS NULL,0,IF(delay<0,-delay,0)) AS \"Arrives sonner with:\", arrival + INTERVAL delay MINUTE as \"Actual arrival time\" from arrivals_departures WHERE UPPER(TRIM(station_name))='%s' AND TIMEDIFF(departure,SYSDATE())<='01:00:00' AND TIMEDIFF(departure, SYSDATE()) >= 0;"
+    "SELECT id_train, station_name as \"Station Name\", arrival as \"arrival time\", IF(delay IS NULL,0,IF(delay<0,0,delay)) as \"Delay\", IF(delay IS NULL,0,IF(delay<0,-delay,0)) AS \"Arrives sonner with:\", arrival + INTERVAL delay MINUTE as \"Actual arrival time\" from arrivals_departures WHERE UPPER(TRIM(station_name))='%s' AND TIMEDIFF(arrival,SYSDATE())<='01:00:00' AND TIMEDIFF(arrival, SYSDATE()) >= 0;"
     ,station.c_str());
 
     std::string res ;
@@ -432,8 +435,8 @@ std::string treat_client::add_train_option(){
     std::string res,response_to_client;
     res = this->DB_connection.get_result_of_the_query(insert_id_train);
     printf("The response in TRAINS is %s\n", res.c_str());
-    if(res==""){
-        response_to_client = "The train which you want to add is a new one ( the ID: " + id_train + " didn't exist";
+    if(res=="The insert of the train was successfully made!"){
+        response_to_client = "The train which you want to add is a new one ( the ID: " + id_train + " didn't exist )";
     }
     else{//res.substr(0,5)="ERROR"
         response_to_client = "It already exists a train with ID: " + id_train;

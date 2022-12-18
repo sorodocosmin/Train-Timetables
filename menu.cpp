@@ -50,7 +50,7 @@ void menu::handle_client_option(std::string option){
             this->trains_which_leave_in_the_next_hour_option();
         }
         else if(option == "4\n"){//show the trains which arrive in the next hour in a station X
-            this->trains_which_leave_in_the_next_hour_option();
+            this->trains_which_arrive_in_the_next_hour_option();
         }
         else{
             this->send_to_server_message += this->start_delimiter + "Unknown command" + this->stop_delimiter;
