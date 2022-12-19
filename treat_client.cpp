@@ -6,11 +6,28 @@ treat_client::treat_client (int descriptor, MYSQL *connection) : DB_connection(c
     this->number_of_active_threads ++;
 } 
 
-void treat_client::create_thread(){
+bool treat_client::create_thread(){
     
     pthread_t t;
-    pthread_create(&t,NULL,worker_thread, this);
+    if ( pthread_create(&t,NULL,worker_thread, this) != 0 ){//the thread couldn t be created
+         return false;
+    }
+    else{
+        return true;
+    }
+}
 
+void treat_client::failed_creating_thread(){//it's very unlikley for this function to be executed
+    int ds_cl= this-> desciptor_client;
+    std::string result = this->start_delimiter + "0" + this->stop_delimiter +
+    this->start_delimiter + "cannot serve you right now" + this->stop_delimiter;
+    if (write (ds_cl, result.c_str(), result.length()) <= 0){
+        // where ds_cl = ((treat_client*)arg)->desciptor_client;
+        perror ("[Thread]Write() Error. The response couldn't be sent to the client\n");
+    }
+    else{
+        printf ("[Thread] The response () was successfully sent.\n (The thread coudn't be created)\nDone serving thic client");
+    }
 }
 
 std::string treat_client::response(){
@@ -114,6 +131,7 @@ std::string treat_client::response(){
 
 void * treat_client::worker_thread (void * arg){
     printf("[Active thread number : %d - Asteptam mesajul...\n", treat_client::number_of_active_threads);
+    
     pthread_detach(pthread_self());//the main thread doesn t need to wait for the execution of this thread
     
     char buffer[1024], i=0;
@@ -144,7 +162,7 @@ void * treat_client::worker_thread (void * arg){
                 /* write the response to the client */
                 if (write (ds_cl, result.c_str(), result.length()) <= 0){
                     // where ds_cl = ((treat_client*)arg)->desciptor_client;
-                    perror ("[Thread]Write() Error. The response couldn't send to the client\n");
+                    perror ("[Thread]Write() Error. The response couldn't be sent to the client\n");
                     quit=1;//if the client leaves before getting an answer,
                 }
                 else{
@@ -527,7 +545,6 @@ std::string treat_client::add_new_account_option(){
 }
 
 std::string treat_client::change_username_option(){
-printf("USERNAME\n");
     std::string username = this->string_between_2_delimiters_and_erase();
     username = this->delete_the_delimiters_from_a_string(username);
 
@@ -555,7 +572,6 @@ printf("USERNAME\n");
         new_username.c_str(),username.c_str(),password.c_str()
         );
         res = this->DB_connection.get_result_of_the_query(update_username);
-        printf("The result is : %s\n", res.c_str());
         if(res.substr(0,5) == "ERROR"){
             return "Sorry, the username couldn't be changed:(\n Please try again;";
         }
@@ -568,7 +584,6 @@ printf("USERNAME\n");
 
 
 std::string treat_client::change_password_option(){
-printf("PASSWORD\n");
     std::string username = this->string_between_2_delimiters_and_erase();
     username = this->delete_the_delimiters_from_a_string(username);
 

@@ -45,6 +45,7 @@ class treat_client {
     treat_client (int descriptor, MYSQL *connection); //constructor
 
     std::string response();
-    void create_thread();
+    bool create_thread();
+    void failed_creating_thread();
 
 };

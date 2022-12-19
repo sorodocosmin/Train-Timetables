@@ -600,6 +600,8 @@ void menu::set_logged_status(){
 void menu::print_received_message(){
     //before we print the message, we delete the <logged_status> part
     this->received_message.erase(0,1 + this->start_delimiter.length()+this->stop_delimiter.length());
-
+    if(this->received_message == "cannot serve you right now" ){
+        this->logged_status = false;//the server could not serve us right now (we couldn t create a thread)
+    }
     printf("\n\n%s\n\n", (this->received_message).c_str());
 }

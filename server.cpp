@@ -80,7 +80,9 @@ while (1)
     }
     
     treat_client CLIENT(client, BD.getConnection());
-    CLIENT.create_thread();
+    if ( CLIENT.create_thread() == false ){//the thread created successfully
+        CLIENT.failed_creating_thread();
+    }
 
 }//while
 
