@@ -18,6 +18,6 @@ This is the menu which an <strong> Admin </strong> will get :
      run the <strong>makefile</strong> file --> run the "<strong>Server</strong>" executable --> run the "<strong>Client</strong>" executable (ofcourse you will need to specify the proper IP (in case that the "Server" is on another machine) )\
      \
      \
-  Note : you should have the proper database to which the Server connects so that you will not get an error ( you can see more about this in the Documentation section)
+  Note : you should make sure that you have the proper database to which the Server connects so that you will not get an error ( you can see more about this in the Documentation section)
   \
  )
